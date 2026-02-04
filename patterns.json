@@ -1,0 +1,8 @@
+{
+  "items": [
+    {
+      "name": "uris",
+      "regex": "((?:vless|vmess|ss|trojan|ssr):\\/\\/[^\\s]+)"
+    }
+  ]
+}
