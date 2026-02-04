@@ -3,7 +3,7 @@ name: Collector
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */5 * * *"  # every 5 hours (UTC)
+    - cron: "0 */5 * * *" # every 5 hours (UTC)
 
 permissions:
   contents: write
