@@ -1,47 +1,60 @@
-name: Update Configs
-permissions: write-all
+name: Extract VPN Configs (User Client)
 
 on:
-  push:
-    branches:
-      - main
   schedule:
-    - cron: "*/12 * * * *"
+# اجرا هر ۲ ساعت یک‌بار (از ۸ صبح تا ۱۲ شب به وقت تهران)
+    - cron: '30 4 * * *'  # 08:00 صبح تهران
+    - cron: '30 6 * * *'  # 10:00 صبح تهران
+    - cron: '30 8 * * *'  # 12:00 ظهر تهران
+    - cron: '30 10 * * *' # 14:00 ظهر تهران
+    - cron: '30 12 * * *' # 16:00 عصر تهران
+    - cron: '30 14 * * *' # 18:00 عصر تهران
+    - cron: '30 16 * * *' # 20:00 شب تهران
+    - cron: '30 18 * * *' # 22:00 شب تهران
+    - cron: '30 20 * * *' # 00:00 بامداد تهران
+  
+  workflow_dispatch: # اجازه اجرای دستی
 
 jobs:
-  build:
+  run-script:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # مجوز برای پوش کردن تغییرات به مخزن
 
     steps:
-    - name: Checkout code  
-      uses: actions/checkout@v2  
-      with:
-        fetch-depth: 0  
-        persist-credentials: true  
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python  
-      uses: actions/setup-python@v2  
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-    - name: Install dependencies  
-      working-directory: Files  
-      run: pip install -r requirements.txt
+      - name: Download GeoIP Database
+        run: |
+          
+          curl -L "https://github.com/Loyalsoldier/geoip/releases/latest/download/Country.mmdb" -o dbip-country-lite.mmdb
+          
+          if [ ! -s dbip-country-lite.mmdb ]; then
+            echo "::error::Downloaded dbip-country-lite.mmdb is empty or download failed!"
+            exit 1
+          fi
+          echo "✅ Database file downloaded successfully."
 
-    - name: Run Python scripts  
-      working-directory: Files  
-      run: |
-        python app.py
-        python sort.py
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
 
-    - name: Commit and push changes
-      uses: EndBug/add-and-commit@v7
-      with:
-        author_name: "GitHub Actions"
-        author_email: "actions@github.com"
-        message: "Updated 11 minutes Ago🤝"
-        add: "."
-        pull: "NO-PULL"
-        push: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run main.py
+        run: python main.py
+        env:
+          API_ID: ${{ secrets.API_ID }}
+          API_HASH: ${{ secrets.API_HASH }}
+          SESSION_STRING: ${{ secrets.PYROGRAM_SESSION }}
+          CHANNELS_LIST: ${{ secrets.CHANNELS_LIST }}
+          GROUPS_LIST: ${{ secrets.GROUPS_LIST }}
+
+      - name: Commit and Push new configs
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update V2Ray configs (Clash, Sing-box & Raw)"
+          file_pattern: "*.yaml *.txt *.json"
