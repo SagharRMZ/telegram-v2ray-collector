@@ -1,3 +1,7 @@
+concurrency:
+  group: collector
+  cancel-in-progress: true
+
 name: Collector
 
 permissions:
